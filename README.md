@@ -10,16 +10,16 @@
 
 ### How do I get set up? ###
 
-* Summary of set up
+* Summary of set up :
 	The main file is ServerDriver.java. This file will accept arguments "<portNumber> <clientMax>", then run the server thread as a daemon.
 * Configuration
 * Dependencies
-* Database configuration
-* How to run tests
-U funny
+* Database configuration :
+	Working on it
+* How to run tests: 
+	U funny
 * Deployment instructions
 
-* Repo owner or admin
-Ehab Mahran - ehabmahr@buffalo.edu
-* Other community or team contact
-Zakhar Kravchuk - zakharkr@buffalo.edu
+* Admins:
+	* Ehab Mahran - ehabmahr@buffalo.edu
+	* Zakhar Kravchuk - zakharkr@buffalo.edu
