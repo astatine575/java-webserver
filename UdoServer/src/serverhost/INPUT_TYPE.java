@@ -1,5 +1,5 @@
 package serverhost;
 
-public enum INPUTTYPE {
+public enum INPUT_TYPE {
 	LOGIN_REQUEST, JOBLIST_REQUEST, JOB_REQUEST, JOB_RESERVATION, ERRONEOUS; 
 }

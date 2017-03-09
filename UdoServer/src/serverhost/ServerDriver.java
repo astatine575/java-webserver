@@ -13,7 +13,7 @@ public class ServerDriver {
 
 		int portNumber = 4444;
 		
-		int clientMax = 100;
+		int clientMax = 8000;
 		
 		if (args.length>=1)
 			portNumber = Integer.parseInt(args[0]);
@@ -26,20 +26,43 @@ public class ServerDriver {
 		
 		serverThread.setDaemon(true);
 		
+		System.out.println("Starting server...");
+		
 		serverThread.start();
 		
+		while (!server._isRunning){
+			try { //wait for server thread to wake you up
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+			}
+		}
 		
-		String love;
+		System.out.println("Server started on port "+portNumber);
+		
+		String consolein;
 		
 		Scanner sc = new Scanner(System.in);
 		
-		while ((love=sc.nextLine())!=null){
-			if (love.equals("HATE"))
+		System.out.print(": ");
+		
+		while ((consolein=sc.nextLine())!=null){
+			if (consolein.equals("quit"))
 				break;
-			System.out.println("I love "+love+"!");
+			System.out.print(": ");
 		}
 		
 		sc.close();
+		
+		System.out.println("Shutting down server...");
+		
+		server.shutDown();
+		
+		try {
+			serverThread.join();
+		} catch (InterruptedException e) {
+			System.err.println("INTERRUPT THROWN");
+			e.printStackTrace();
+		}
 		
 		//TODO: ADD NICE WAY TO SHUT DOWN THREADS BEFORE JVM EXITS
 		

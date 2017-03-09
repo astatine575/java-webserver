@@ -23,7 +23,7 @@ public class ServerProtocol {
 		return false;
 	}
 	
-	private static INPUTTYPE decodeRequestType(String s){
-		return INPUTTYPE.ERRONEOUS;
+	private static INPUT_TYPE decodeRequestType(String s){
+		return INPUT_TYPE.ERRONEOUS;
 	}
 }
