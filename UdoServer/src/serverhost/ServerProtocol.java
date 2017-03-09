@@ -10,10 +10,13 @@ public class ServerProtocol {
 	
 	public static boolean processInput(String input, PrintWriter out){ //TODO: Databasing
 		
+		System.out.println(input);
+		System.out.println("one run of processInput");
+		
 		switch (decodeRequestType(input)){
 		case ERRONEOUS:
 		default:
-			out.print("ERRONEOUS");
+			out.print("<html>hi</html>");
 			break;
 		}
 		

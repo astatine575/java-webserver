@@ -1,8 +1,10 @@
 package serverhost;
 
+import java.util.Scanner;
+
 public class ServerDriver {
 
-	public static ServerThread server;
+	public static ServerThread server = null;
 	
 	public static void main(String[] args) {
 		
@@ -18,9 +20,29 @@ public class ServerDriver {
 		if (args.length>=2)
 			clientMax = Integer.parseInt(args[1]);
 		
-		server = new ServerThread(portNumber, clientMax); //start the server
-        
-        
+		server = new ServerThread(portNumber, clientMax); //initialize the server
+		
+		Thread serverThread = new Thread(server);
+		
+		serverThread.setDaemon(true);
+		
+		serverThread.start();
+		
+		
+		String love;
+		
+		Scanner sc = new Scanner(System.in);
+		
+		while ((love=sc.nextLine())!=null){
+			if (love.equals("HATE"))
+				break;
+			System.out.println("I love "+love+"!");
+		}
+		
+		sc.close();
+		
+		//TODO: ADD NICE WAY TO SHUT DOWN THREADS BEFORE JVM EXITS
+		
     }
 
 }

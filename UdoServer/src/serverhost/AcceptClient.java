@@ -7,11 +7,12 @@ public class AcceptClient implements Runnable{
 	
 	private Socket _clientSocket;
 	
-	public AcceptClient(Socket clientSocket){
+	public AcceptClient(Socket clientSocket){ //just store the socket so that run can use it
 		_clientSocket = clientSocket;
 	}
 	
-	public void run(){
+	public void run(){ 
+		
 		
 		PrintWriter out = null;
 		BufferedReader in = null;
@@ -36,7 +37,7 @@ public class AcceptClient implements Runnable{
 		String inputLine;
 
 		try{
-			while ((inputLine = in.readLine()) != null) {
+			while ((inputLine = in.readLine()) != null) { //while client is connected
 				if (ServerProtocol.processInput(inputLine,out)){
 					System.out.println("Client closed connection");
 					out.close();
@@ -77,6 +78,9 @@ public class AcceptClient implements Runnable{
 			System.err.println("Failed to close output to socket");
 		}
 		return;
+		
+		
+		// System.out.println("I'm a little new thread, short and stout");
 	}
 
 

@@ -43,7 +43,8 @@ public class Lock {
 			lockedCount--;
 			if(lockedCount == 0){
 				isLocked = false;
-				threadQueue.removeFirst().notify();
+				if (!threadQueue.isEmpty())
+					threadQueue.removeFirst().notify();
 			}
 		}
 	}
