@@ -3,7 +3,7 @@
 ### What is this repository for? ###
 
 * Quick summary:
-	This is a multi-threaded webserver written in java meant to serve the Udo application.
+	This is a multi-threaded webserver written in java
 * Version
 	Latest Version is 0.1.0
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
