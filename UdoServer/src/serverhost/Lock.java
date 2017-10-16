@@ -27,7 +27,7 @@ public class Lock {
 			threadQueue.add(callingThread);
 		while(isLocked && lockedBy != callingThread){
 			try{
-				callingThread.wait();
+				callingThread.sleep(1000);
 			} catch (InterruptedException e){
 				
 			}
