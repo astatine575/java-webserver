@@ -10,12 +10,13 @@
 
 ### How do I get set up? ###
 
-* Summary of set up :
-	The main file is ServerDriver.java. This file will accept arguments "<portNumber> <clientMax>", then run the server thread as a daemon.
-* Configuration :
-        You can give a port number and a concurrent client limit (limit of how many threads you need per client)
-* Dependencies
-* Database configuration :
+* Summary of set up : 
+	The main file is ServerDriver.java. This file will accept arguments "<portNumber> <threadNum>", then run the server thread as a daemon.
+* Configuration : 
+        You can give a port number and a concurrent thread limit
+* Dependencies : 
+		None.
+* Database configuration : 
 	Probably Microsoft Access
 * How to run tests: 
 	U funny
@@ -23,4 +24,3 @@
 
 * Admins:
 	* Ehab Mahran - ehabmahr@buffalo.edu
-	* Zakhar Kravchuk - zakharkr@buffalo.edu
