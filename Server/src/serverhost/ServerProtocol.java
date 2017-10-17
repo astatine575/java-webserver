@@ -1,6 +1,8 @@
 package serverhost;
 import java.io.*;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Scanner;
 
 public class ServerProtocol {
@@ -29,13 +31,15 @@ public class ServerProtocol {
 	
 	public static int processInput(InputStream in, OutputStream out){ //TODO: Databasing
 		
-		char[] request = new char[4096];
+		char[] req = new char[8192];
 		
 		InputStreamReader rd;
 		
+		int reqlen = 0;
+		
 		try {
 			rd = new InputStreamReader(in, charset);
-			rd.read(request);
+			reqlen = rd.read(req);
 		} catch (UnsupportedEncodingException e) {
 			System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset);
 		}catch (IOException e) {
@@ -43,72 +47,80 @@ public class ServerProtocol {
 		}
 		
 		
-		//System.out.println(request);
+		String request = new String(req).substring(0, reqlen);
 		
-		String output = "HUEHUEHUEHUE";
+		//String output = 
 		
-		byte[] outputBytes;
+		byte[] outputBytes = processHTTP(request);
 		try {
-			outputBytes = output.getBytes(charset);
+			//outputBytes = output.getBytes(charset);
 			out.write(outputBytes);
 		} catch (UnsupportedEncodingException e) {
 			System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset);
 		}catch (IOException e) {
-			System.err.println(Thread.currentThread().getName()+": Failed to write output from client");
+			System.err.println(Thread.currentThread().getName()+": Failed to write output to client");
 		}
 		
-		/*
-		byte[] authorization = new byte[Long.BYTES];
-		
-		int typeOfRequest = 0;
-		 
-		try {
-			if ((in.read(authorization))!=128){
-				out.write(-2);
-				return -2;
-			}
-			try{
-				Long auth = (Long) deserialize(authorization);
-			} catch (ClassNotFoundException f){
-				out.write(-2);
-				return -2;
-			}
-		} catch (IOException e){
-			System.out.println("IO error in client authorization");
-			return -1;
-		}
-
-		System.out.println(in);
-		//System.out.println("one run of processInput");
-
-		while(true){
-
-			try {
-				typeOfRequest = in.read();
-				switch (decodeRequestType(typeOfRequest)){
-				case ERRONEOUS:
-					out.write(0);
-					break;
-				default:
-					out.write(-1);
-					return -1;
-				}
-			} catch (IOException e) {
-				System.out.println("IO error in client reading");
-				return -1;
-			}
-			return 0;
-		}
-		*/
 		return 0;
 	}
-	
-	private static INPUT_TYPE decodeRequestType(int i){
+
+	private static byte[] processHTTP(String request) {
 		
-		switch (i){
-		case 0: return INPUT_TYPE.PING;
+		String[] requestLines = request.split("\n");
+		
+		if (requestLines.length <= 0)
+			return null;
+		
+		DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy H:mm:ss zzz");
+		new Date(0);
+		
+		String[] requestLine = requestLines[0].split(" ");
+		
+		byte[] response = null;
+		
+		String statusLine = "";
+		String httpHeaders = "Date: "+dateFormat.format(new Date(System.currentTimeMillis()));
+		
+		boolean returnBody = false;
+		long bodyLen = 0;
+		byte[] body = null;
+		
+		switch(requestLine[0]){
+		case "GET": //response to a get request
+		case "HEAD":
+			String filename = requestLine[1];
+			if (!ServerDriver.isValidFile(filename)) {
+				statusLine = "HTTP/1.1 404 BAD";
+				break; 
+			}
+			RandomAccessFile file = null;
+			System.out.println("Trying to open file " + System.getProperty("user.dir")+"/serverdata"+requestLine[1]);
+			try { file = new RandomAccessFile(System.getProperty("user.dir")+"/serverdata"+requestLine[1], "r"); } 
+			catch (FileNotFoundException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": FILE ERROR"); break; }
+			statusLine = "HTTP/1.1 200 OK";
+			try { bodyLen = file.length(); }
+			catch (IOException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": IO ERROR"); break; }
+			if (requestLine[0].equals("HEAD")) // head requests don't return body
+				break;
+			returnBody = true;
+			body = new byte[(int)bodyLen];
+			try { file.readFully(body); }
+			catch (IOException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": IO ERROR"); break; }
 		default:
-			return INPUT_TYPE.ERRONEOUS;
+			break;
 		}
+		
+		try { response = (statusLine + "\n" + httpHeaders + "\n\n").getBytes(charset); } 
+		catch (UnsupportedEncodingException e){ System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset); }
+		if (returnBody){
+			byte[] reply = new byte[response.length+(int)bodyLen];
+			for (int i = 0; i < response.length; i++)
+				reply[i] = response[i];
+			for (int i = response.length; i < reply.length; i++)
+				reply[i] = body[i-response.length];
+			response = reply;
+		}
+		
+		return response;
 	}
 }

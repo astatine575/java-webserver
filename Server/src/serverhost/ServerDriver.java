@@ -1,5 +1,6 @@
 package serverhost;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.io.IOException;
@@ -11,6 +12,8 @@ public class ServerDriver {
 	public static ServerThread server = null;
 	
 	public static RequestHandler requestHandlers[];
+	
+	private static ArrayList<String> validFiles;
 	
 	public static void main(String[] args) {
 		
@@ -110,6 +113,10 @@ public class ServerDriver {
 		
 		System.exit(0);
     }
+	
+	public static boolean isValidFile(String filename){
+		return true;
+	}
 
 }
 

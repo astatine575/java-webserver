@@ -59,7 +59,7 @@ public class ServerThread implements Runnable{
         	if (newRequest != null){ // if a valid socket was connected, add it to the request list and notify any potential sleepers
         		_requestLock.acquire();
         		_requestQueue.add(newRequest);
-        		System.out.println("Queued request from: "+newRequest.getInetAddress()); // client connected, print this info out for our lovely admins
+        		//System.out.println("Queued request from: "+newRequest.getInetAddress()); // client connected, print this info out for our lovely admins
         		_requestLock.release();
         		_requestMonitor.wake();
         	}
