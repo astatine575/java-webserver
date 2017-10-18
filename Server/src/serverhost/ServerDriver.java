@@ -113,6 +113,9 @@ public class ServerDriver {
 		while ((consolein=sc.nextLine())!=null){
 			if (consolein.equals("quit"))
 				break;
+			else if (consolein.equals("valid files"))
+				for (String filename : validFiles) 
+					System.out.println(filename);
 			System.out.print(": ");
 		}
 		

@@ -80,8 +80,6 @@ public class ServerProtocol {
 		
 		String[] requestLines = request.split("\n");
 		
-		System.out.println(requestLines[0]);
-		
 		if (requestLines.length <= 0)
 			return;
 		
@@ -106,14 +104,10 @@ public class ServerProtocol {
 			String filename = requestLine[1];
 			if (filename.equals("/"))
 				filename = ServerDriver.homepage;
-			if (!ServerDriver.isValidFile(filename)) {
+			if (!ServerDriver.isValidFile(filename)) 
 				statusLine = "HTTP/1.1 404 FILE_NOT_FOUND";
-				System.out.println("404 Thrown");
-				break; 
-			}
-			System.out.println("Trying to open file " + System.getProperty("user.dir")+ServerDriver.serverdata+filename);
 			try { file = new RandomAccessFile(System.getProperty("user.dir")+ServerDriver.serverdata+filename, "r"); } 
-			catch (FileNotFoundException e) { statusLine = "HTTP/1.1 404 FILE_NOT_FOUND"; System.err.println(Thread.currentThread().getName()+": FILE NOT FOUND"); break; }
+			catch (FileNotFoundException e) { statusLine = "HTTP/1.1 404 FILE_NOT_FOUND"; System.err.println(Thread.currentThread().getName()+": FILE "+System.getProperty("user.dir")+ServerDriver.serverdata+filename+" NOT FOUND"); break; }
 			statusLine = "HTTP/1.1 200 OK";
 			try { bodyLen = file.length(); }
 			catch (IOException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": CAN'T READ FILE"); break; }
