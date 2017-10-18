@@ -3,7 +3,10 @@ package serverhost;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.security.*;
 
@@ -15,16 +18,32 @@ public class ServerDriver {
 	
 	private static ArrayList<String> validFiles;
 	
+	public static String homepage;
+	
+	public static String mode;
+	
+	public static String serverdata;
+	
 	public static void main(String[] args) {
 		
 		if (args.length>2)
-			System.err.println("proper usage: UdoServer <portNumber> <threadNum>");
+			System.err.println("proper usage: UdoServer <portNumber> <threadNum> <mode>");
 
 		int portNumber = 80;
 		
 		int threadNum = 4;
 		
+		mode = "http";
+		
+		serverdata = "/serverdata";
+		
+		homepage = "/index.html";
+		
+		String permissionsFile = "/validFiles.ini";
+		
 		LinkedList<Socket> requestQueue = new LinkedList<Socket>();
+		
+		validFiles = new ArrayList<String>();
 		
 		Lock requestLock = new Lock();
 		
@@ -34,6 +53,19 @@ public class ServerDriver {
 			portNumber = Integer.parseInt(args[0]);
 		if (args.length>=2)
 			threadNum = Integer.parseInt(args[1]);
+		if (args.length>=3)
+			mode = "" + args[2];
+		
+		System.out.println("Loading file access permissions...");
+		
+		loadFilePermissions(System.getProperty("user.dir")+permissionsFile);
+		
+		System.out.println("File permissions loaded from " + System.getProperty("user.dir")+permissionsFile);
+		
+		/*
+		for (String filename : validFiles) 
+			System.out.println(filename);
+		*/
 		
 		server = new ServerThread(portNumber, requestQueue, requestLock, requestMonitor); //initialize the server
 		
@@ -115,8 +147,28 @@ public class ServerDriver {
     }
 	
 	public static boolean isValidFile(String filename){
-		return true;
+		return validFiles.contains(filename);
 	}
-
+	
+	public static void loadFilePermissions(String filename){
+		RandomAccessFile permissionFile = null;
+		try {
+			permissionFile = new RandomAccessFile(filename, "r");
+		} catch (FileNotFoundException e) {
+			System.err.println("SERVER PERMISSION FILE "+filename+" NOT FOUND");
+			System.exit(1);
+		}
+		
+		String nextLine = "";
+		
+		try{
+			while ((nextLine = permissionFile.readLine())!=null)
+				validFiles.add(nextLine);
+			permissionFile.close();
+		}catch(IOException e){
+			System.err.println("SERVER PERMISSION FILE "+filename+" FAILED TO BE READ FROM");
+			System.exit(1);
+		}
+	}
 }
 
