@@ -26,8 +26,10 @@ public class ServerDriver {
 	
 	public static void main(String[] args) {
 		
-		if (args.length>2)
+		if (args.length>3){
 			System.err.println("proper usage: UdoServer <portNumber> <threadNum> <mode>");
+			System.exit(0);
+		}
 
 		int portNumber = 80;
 		

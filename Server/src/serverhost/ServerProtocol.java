@@ -104,8 +104,10 @@ public class ServerProtocol {
 			String filename = requestLine[1];
 			if (filename.equals("/"))
 				filename = ServerDriver.homepage;
-			if (!ServerDriver.isValidFile(filename)) 
+			if (!ServerDriver.isValidFile(filename)){ 
 				statusLine = "HTTP/1.1 404 FILE_NOT_FOUND";
+				return;
+			}
 			try { file = new RandomAccessFile(System.getProperty("user.dir")+ServerDriver.serverdata+filename, "r"); } 
 			catch (FileNotFoundException e) { statusLine = "HTTP/1.1 404 FILE_NOT_FOUND"; System.err.println(Thread.currentThread().getName()+": FILE "+System.getProperty("user.dir")+ServerDriver.serverdata+filename+" NOT FOUND"); break; }
 			statusLine = "HTTP/1.1 200 OK";
