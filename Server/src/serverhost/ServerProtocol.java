@@ -33,7 +33,7 @@ public class ServerProtocol {
 		
 		char[] req = new char[8192];
 		
-		InputStreamReader rd;
+		InputStreamReader rd = null;
 		
 		int reqlen = 0;
 		
@@ -42,21 +42,39 @@ public class ServerProtocol {
 			reqlen = rd.read(req);
 		} catch (UnsupportedEncodingException e) {
 			System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset);
+			return -1;
 		}catch (IOException e) {
-			System.err.println(Thread.currentThread().getName()+": Failed to read input from client");
+			// System.err.println(Thread.currentThread().getName()+": Failed to read input from client");
+			return -1;
 		}
 		
+		if (reqlen == -1){
+			try { rd.close(); } catch (IOException e) {}
+			return -1;
+		}
 		
 		String request = new String(req).substring(0, reqlen);
 		
 		//String output = 
 		
-		byte[] outputBytes = processHTTP(request);
+		byte[] outputBytes = null;
+		
+		boolean outputBytesSet = true;
+		
+		switch (ServerDriver.mode){
+		case "http":
+			processHTTP(request,out);
+			outputBytesSet = false;
+			break;
+		default:
+			try { outputBytes = request.getBytes(charset); } 
+			catch (UnsupportedEncodingException e1) { outputBytes = new byte[0]; System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset); }
+			break;
+		}
+		
+		
 		try {
-			//outputBytes = output.getBytes(charset);
-			out.write(outputBytes);
-		} catch (UnsupportedEncodingException e) {
-			System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset);
+			if (outputBytesSet) out.write(outputBytes);
 		}catch (IOException e) {
 			System.err.println(Thread.currentThread().getName()+": Failed to write output to client");
 		}
@@ -64,12 +82,12 @@ public class ServerProtocol {
 		return 0;
 	}
 
-	private static byte[] processHTTP(String request) {
+	private static void processHTTP(String request,OutputStream out) {
 		
 		String[] requestLines = request.split("\n");
 		
 		if (requestLines.length <= 0)
-			return null;
+			return;
 		
 		DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy H:mm:ss zzz");
 		new Date(0);
@@ -84,43 +102,58 @@ public class ServerProtocol {
 		boolean returnBody = false;
 		long bodyLen = 0;
 		byte[] body = null;
+		RandomAccessFile file = null;
 		
 		switch(requestLine[0]){
 		case "GET": //response to a get request
 		case "HEAD":
 			String filename = requestLine[1];
-			if (!ServerDriver.isValidFile(filename)) {
-				statusLine = "HTTP/1.1 404 BAD";
-				break; 
+			if (filename.equals("/"))
+				filename = ServerDriver.homepage;
+			if (!ServerDriver.isValidFile(filename)){ 
+				statusLine = "HTTP/1.1 404 FILE_NOT_FOUND";
+				return;
 			}
-			RandomAccessFile file = null;
-			System.out.println("Trying to open file " + System.getProperty("user.dir")+"/serverdata"+requestLine[1]);
-			try { file = new RandomAccessFile(System.getProperty("user.dir")+"/serverdata"+requestLine[1], "r"); } 
-			catch (FileNotFoundException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": FILE ERROR"); break; }
+			try { file = new RandomAccessFile(System.getProperty("user.dir")+ServerDriver.serverdata+filename, "r"); } 
+			catch (FileNotFoundException e) { statusLine = "HTTP/1.1 404 FILE_NOT_FOUND"; System.err.println(Thread.currentThread().getName()+": FILE "+System.getProperty("user.dir")+ServerDriver.serverdata+filename+" NOT FOUND"); break; }
 			statusLine = "HTTP/1.1 200 OK";
 			try { bodyLen = file.length(); }
-			catch (IOException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": IO ERROR"); break; }
+			catch (IOException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": CAN'T READ FILE"); break; }
 			if (requestLine[0].equals("HEAD")) // head requests don't return body
 				break;
 			returnBody = true;
-			body = new byte[(int)bodyLen];
-			try { file.readFully(body); }
-			catch (IOException e) { statusLine = "HTTP/1.1 502 BAD"; System.err.println(Thread.currentThread().getName()+": IO ERROR"); break; }
 		default:
 			break;
 		}
 		
 		try { response = (statusLine + "\n" + httpHeaders + "\n\n").getBytes(charset); } 
 		catch (UnsupportedEncodingException e){ System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset); }
+		
+		try { out.write(response); }
+		catch (IOException e) { System.err.println(Thread.currentThread().getName()+": Failed to write output to client"); return; }
+		
 		if (returnBody){
-			byte[] reply = new byte[response.length+(int)bodyLen];
-			for (int i = 0; i < response.length; i++)
-				reply[i] = response[i];
-			for (int i = response.length; i < reply.length; i++)
-				reply[i] = body[i-response.length];
-			response = reply;
+			body = new byte[256000];
+			try {
+				int rem=file.read(body);
+				do{
+					if (rem==-1) break;
+					try { out.write(body,0,rem); }
+					catch (IOException e) { /* System.err.println(Thread.currentThread().getName()+": Failed to write output to client"); */ break; }
+				} while ((rem=file.read(body))==256000);
+				try { 
+					if (rem>=0)
+						out.write(body,0,rem); }
+				catch (IOException e) { /* System.err.println(Thread.currentThread().getName()+": Failed to write output to client"); */}
+			} catch (IOException e) {
+				System.err.println(Thread.currentThread().getName()+": Failed to read file");
+			}
+			
+			body=null;
+			
 		}
 		
-		return response;
+		try { if (file!=null) file.close(); }
+		catch (IOException e) { System.err.println(Thread.currentThread().getName()+": CAN'T CLOSE FILE"); return; }
 	}
 }
