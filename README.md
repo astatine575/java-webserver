@@ -11,15 +11,15 @@
 ### How do I get set up? ###
 
 * Summary of set up : 
-	The main file is ServerDriver.java. This file will accept arguments "<portNumber> <threadNum>", then run the server thread as a daemon.
+	The main file is ServerDriver.java. This file will accept arguments "<portNumber> <threadNum> <mode>", then run the server thread as a daemon.
 * Configuration : 
-        You can give a port number and a concurrent thread limit
+        You can give a port number and a concurrent thread count, as well as the mode it will operate in (curently just http). You should place server data in a directory "/serverdata" in the root directory of the repository, and place the names of those files that you want the server to be able to access in a file called "validFiles.ini", with one line per file name. So if you want the server to access "/serverdata/index.html", place "index.html" in "/serverdata", and add the line "/index.html" to "validFiles.ini".
 * Dependencies : 
 		None.
 * Database configuration : 
-	Probably Microsoft Access
+	Just a bunch of files for now
 * How to run tests: 
-	U funny
+	Not yet implemented.
 * Deployment instructions
 
 * Admins:

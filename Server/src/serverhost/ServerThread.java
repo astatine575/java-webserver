@@ -66,6 +66,8 @@ public class ServerThread implements Runnable{
         	
         }
         
+        System.out.println("Server Thread shutting down...");
+        
 	}
 
 	public Socket acceptNewRequest() { // listen to the socket till we find a client that wants to connect. connect him and 

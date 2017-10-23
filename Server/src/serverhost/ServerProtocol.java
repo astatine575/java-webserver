@@ -33,7 +33,7 @@ public class ServerProtocol {
 		
 		char[] req = new char[8192];
 		
-		InputStreamReader rd;
+		InputStreamReader rd = null;
 		
 		int reqlen = 0;
 		
@@ -42,10 +42,16 @@ public class ServerProtocol {
 			reqlen = rd.read(req);
 		} catch (UnsupportedEncodingException e) {
 			System.err.println(Thread.currentThread().getName()+": System does not support charset " + charset);
+			return -1;
 		}catch (IOException e) {
-			System.err.println(Thread.currentThread().getName()+": Failed to read input from client");
+			// System.err.println(Thread.currentThread().getName()+": Failed to read input from client");
+			return -1;
 		}
 		
+		if (reqlen == -1){
+			try { rd.close(); } catch (IOException e) {}
+			return -1;
+		}
 		
 		String request = new String(req).substring(0, reqlen);
 		
@@ -128,17 +134,17 @@ public class ServerProtocol {
 		
 		if (returnBody){
 			body = new byte[256000];
-			int repititions = -1;
 			try {
 				int rem=file.read(body);
 				do{
-					repititions++;
 					if (rem==-1) break;
 					try { out.write(body,0,rem); }
-					catch (IOException e) { System.err.println(Thread.currentThread().getName()+": Failed to write output to client"); break; }
+					catch (IOException e) { /* System.err.println(Thread.currentThread().getName()+": Failed to write output to client"); */ break; }
 				} while ((rem=file.read(body))==256000);
-				try { out.write(body,0,rem); }
-				catch (IOException e) { System.err.println(Thread.currentThread().getName()+": Failed to write output to client"); }
+				try { 
+					if (rem>=0)
+						out.write(body,0,rem); }
+				catch (IOException e) { /* System.err.println(Thread.currentThread().getName()+": Failed to write output to client"); */}
 			} catch (IOException e) {
 				System.err.println(Thread.currentThread().getName()+": Failed to read file");
 			}

@@ -132,7 +132,7 @@ public class ServerDriver {
 		
 		try {
 			serverThread.interrupt();
-			serverThread.join();
+			serverThread.join(10000);
 			for (Thread thread : requestThreads){
 				thread.interrupt();
 				thread.join();
