@@ -132,10 +132,10 @@ public class ServerDriver {
 		
 		try {
 			serverThread.interrupt();
-			serverThread.join(10000);
+			serverThread.join(1000);
 			for (Thread thread : requestThreads){
 				thread.interrupt();
-				thread.join();
+				thread.join(1000);
 			}
 		} catch (InterruptedException e) {
 			System.err.println("INTERRUPT THROWN");
