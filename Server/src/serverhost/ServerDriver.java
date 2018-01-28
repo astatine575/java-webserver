@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
 import java.security.*;
+import java.util.concurrent.locks.*;
 
 public class ServerDriver {
 
@@ -47,7 +48,7 @@ public class ServerDriver {
 		
 		validFiles = new ArrayList<String>();
 		
-		Lock requestLock = new Lock();
+		ReentrantLock requestLock = new ReentrantLock();
 		
 		Wait requestMonitor = new Wait();
 		
@@ -118,6 +119,21 @@ public class ServerDriver {
 			else if (consolein.equals("valid files"))
 				for (String filename : validFiles) 
 					System.out.println(filename);
+			else if (consolein.equals("server status"))
+				System.out.println(server.getStatus());
+			else if (consolein.equals("handler status"))
+				for (int i = 0; i < threadNum; i++)
+					System.out.println(requestThreads[i].getName() + ": " + requestHandlers[i].getStatus());
+			else if (consolein.equals("reload valid files")){
+				loadFilePermissions(System.getProperty("user.dir")+permissionsFile);
+				System.out.println("File permissions reloaded from " + System.getProperty("user.dir")+permissionsFile);
+			}
+			else if (consolein.equals("help"))
+				System.out.println("valid files - prints data read from validFiles.txt"
+						+ "\nserver status - prints status of server thread"
+						+ "\nhandler status - prints status of handler thread(s)"
+						+ "\nquit - shuts down server"
+						+ "\nhelp - displays this menu");
 			System.out.print(": ");
 		}
 		
@@ -156,12 +172,13 @@ public class ServerDriver {
 	}
 	
 	public static void loadFilePermissions(String filename){
+		validFiles.clear();
 		RandomAccessFile permissionFile = null;
 		try {
 			permissionFile = new RandomAccessFile(filename, "r");
 		} catch (FileNotFoundException e) {
 			System.err.println("SERVER PERMISSION FILE "+filename+" NOT FOUND");
-			System.exit(1);
+			//System.exit(1);
 		}
 		
 		String nextLine = "";
@@ -172,7 +189,7 @@ public class ServerDriver {
 			permissionFile.close();
 		}catch(IOException e){
 			System.err.println("SERVER PERMISSION FILE "+filename+" FAILED TO BE READ FROM");
-			System.exit(1);
+			//System.exit(1);
 		}
 	}
 }
