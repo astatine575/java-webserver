@@ -11,8 +11,6 @@ public class ServerThread implements Runnable{
 	
 	ReentrantLock _requestLock;
 	
-	Wait _requestMonitor;
-	
 	int _portNumber;
 	
 	LinkedList<Socket> _requestQueue;
@@ -25,11 +23,9 @@ public class ServerThread implements Runnable{
 	
 	ServerSocket _serverSocket = null;
 	
-	public ServerThread(int portNumber, LinkedList<Socket> requestQueue, ReentrantLock requestLock, Wait requestMonitor) {
+	public ServerThread(int portNumber, LinkedList<Socket> requestQueue, ReentrantLock requestLock) {
 		
 		_requestLock = requestLock; //initialize the lock for client count
-		
-		_requestMonitor = requestMonitor;
 		
 		_portNumber = portNumber;
 		
@@ -40,7 +36,7 @@ public class ServerThread implements Runnable{
 		_mainThread = Thread.currentThread();
 	}
 	
-	public void run(){
+	public void run() {
 		
 		// Open a socket on the appropriate port
 		_status = 0;
@@ -56,7 +52,7 @@ public class ServerThread implements Runnable{
         
         _mainThread.interrupt(); 
         
-        while(_isRunning){
+        while(_isRunning) {
         	
         	Socket newRequest = acceptNewRequest(); // listen for a new request
         	
@@ -64,7 +60,10 @@ public class ServerThread implements Runnable{
         		_requestLock.lock();
         		_requestQueue.add(newRequest);
         		_requestLock.unlock();
-        		_requestMonitor.wake();
+
+        		synchronized (_requestQueue) {
+        		_requestQueue.notify();
+        		}
         	}
         }
         

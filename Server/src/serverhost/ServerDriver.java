@@ -27,8 +27,8 @@ public class ServerDriver {
 	
 	public static void main(String[] args) {
 		
-		if (args.length>3){
-			System.err.println("proper usage: UdoServer <portNumber> <threadNum> <mode>");
+		if (args.length > 3){
+			System.err.println("proper usage: java -jar webserver.jar <portNumber> <threadNum> <mode>");
 			System.exit(0);
 		}
 
@@ -50,27 +50,25 @@ public class ServerDriver {
 		
 		ReentrantLock requestLock = new ReentrantLock();
 		
-		Wait requestMonitor = new Wait();
-		
-		if (args.length>=1)
+		if (args.length >= 1)
 			portNumber = Integer.parseInt(args[0]);
-		if (args.length>=2)
+		if (args.length >= 2)
 			threadNum = Integer.parseInt(args[1]);
-		if (args.length>=3)
+		if (args.length >= 3)
 			mode = "" + args[2];
 		
 		System.out.println("Loading file access permissions...");
 		
-		loadFilePermissions(System.getProperty("user.dir")+permissionsFile);
+		loadFilePermissions(System.getProperty("user.dir") + permissionsFile);
 		
-		System.out.println("File permissions loaded from " + System.getProperty("user.dir")+permissionsFile);
+		System.out.println("File permissions loaded from " + System.getProperty("user.dir") + permissionsFile);
 		
 		/*
 		for (String filename : validFiles) 
 			System.out.println(filename);
 		*/
 		
-		server = new ServerThread(portNumber, requestQueue, requestLock, requestMonitor); //initialize the server
+		server = new ServerThread(portNumber, requestQueue, requestLock); //initialize the server
 		
 		Thread serverThread = new Thread(server);
 		
@@ -82,11 +80,13 @@ public class ServerDriver {
 		
 		serverThread.start();
 		
+		int msWaited = 0;
 		while (!server._isRunning){
 			try { //wait for server thread to wake you up
-				Thread.sleep(1000);
+				Thread.sleep(10);
 			} catch (InterruptedException e) {
 			}
+			msWaited += 10;
 		}
 		
 		System.out.println("Server started on port "+portNumber);
@@ -98,7 +98,7 @@ public class ServerDriver {
 		
 		
 		for (int i = 0; i < threadNum; i++){
-			requestHandlers[i] = new RequestHandler(requestQueue, requestLock, requestMonitor);
+			requestHandlers[i] = new RequestHandler(requestQueue, requestLock);
 			requestThreads[i] = new Thread(requestHandlers[i]);
 			requestThreads[i].setDaemon(true);
 			requestThreads[i].setName("Request Thread #" + i);

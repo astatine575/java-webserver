@@ -11,51 +11,66 @@ public class RequestHandler implements Runnable{
 	
 	private ReentrantLock _requestLock;
 	
-	private Wait _requestMonitor;
-	
-	private int _status = -1; // -1 = uninitialized, 0 = running and looking for request, 1 = waiting for request, 2 = handling request, 3 = connecting to client   
-	
 	private boolean _isRunning = true;
 	
-	public RequestHandler(LinkedList<Socket> requestQueue, ReentrantLock requestLock, Wait requestMonitor) {
+	public enum Status {
+		UNINITIALIZED,
+		LOOKING_FOR_REQUEST,
+		FOUND_REQUEST,
+		WAITING_FOR_REQUEST,
+		HANDLING_REQUEST,
+		CONNECTING_WITH_CLIENT;
+	}
+	
+	private Status _currentStatus = Status.UNINITIALIZED; // -1 = uninitialized, 0 = running and looking for request, 1 = waiting for request, 2 = handling request, 3 = connecting to client   
+	
+	public RequestHandler(LinkedList<Socket> requestQueue, ReentrantLock requestLock) {
 		_requestQueue = requestQueue;
 		_requestLock = requestLock;
-		_requestMonitor = requestMonitor;
 	}
 	
 	public void run(){
-		
-		// extract a request to be handled.
-		_status = 0;
-		
 		Socket currentRequest; 
-		
 		while(_isRunning){
-			//System.out.println(Thread.currentThread().getName()+": setting status to 0");
-			_status = 0;
-			//System.out.println(Thread.currentThread().getName()+": status set to 0, acquiring lock");
+			// Set status to LOOKING_FOR_REQUEST
+			DebugLog(Thread.currentThread().getName()+": setting status to LOOKING_FOR_REQUEST");
+			_currentStatus = Status.LOOKING_FOR_REQUEST;
+			
+			DebugLog(Thread.currentThread().getName()+": status set to LOOKING_FOR_REQUEST, acquiring lock");
 			_requestLock.lock();
-			//System.out.println(Thread.currentThread().getName()+": Lock acquired, looking for request");
+			
+			DebugLog(Thread.currentThread().getName()+": Lock acquired, looking for request");
 			if (!_requestQueue.isEmpty()){
-				//System.out.println(Thread.currentThread().getName()+": request found, setting status to 1");
-				_status = 1;
-				//System.out.println(Thread.currentThread().getName()+": status set to 1, retrieving request");
+				// Queue isn't empty, retrieve request and release the lock
+				DebugLog(Thread.currentThread().getName()+": request found, setting status to FOUND_REQUEST");
+				_currentStatus = Status.FOUND_REQUEST;
+				DebugLog(Thread.currentThread().getName()+": status set to FOUND_REQUEST, retrieving request");
 				currentRequest = _requestQueue.pop();
-				//System.out.println(Thread.currentThread().getName()+": request retrieved, releasing lock");
+				DebugLog(Thread.currentThread().getName()+": request retrieved, releasing lock");
 				_requestLock.unlock();
-				//System.out.println(Thread.currentThread().getName()+": Lock released, setting status to 3");
-				_status = 3;
-				//System.out.println(Thread.currentThread().getName()+": status set to 1, handling request");
+				
+				// Handle the request
+				DebugLog(Thread.currentThread().getName()+": Lock released, setting status to HANDLING_REQUEST");
+				_currentStatus = Status.HANDLING_REQUEST;
+				DebugLog(Thread.currentThread().getName()+": status set to HANDLING_REQUEST, handling request");
 				handleRequest(currentRequest);
 			}
 			else {
-				//System.out.println(Thread.currentThread().getName()+": no request found, releasing lock");
+				// Queue was empty, release the lock
+				DebugLog(Thread.currentThread().getName()+": no request found, releasing lock");
 				_requestLock.unlock();
-				//System.out.println(Thread.currentThread().getName()+": lock released, setting status to 2");
-				_status = 2;
-				//System.out.println(Thread.currentThread().getName()+": status set to 2, sleeping on request Monitor");
-				_requestMonitor.sleep();
-				//System.out.println(Thread.currentThread().getName()+": woken up from request monitor, repeating loop");
+				
+				// Wait for request to come in on request monitor
+				DebugLog(Thread.currentThread().getName()+": lock released, setting status to WAITING_FOR_REQUEST");
+				_currentStatus = Status.WAITING_FOR_REQUEST;
+				DebugLog(Thread.currentThread().getName()+": status set to WAITING_FOR_REQUEST, waiting on request queue");
+				synchronized (_requestQueue)
+				{
+				try { _requestQueue.wait(); } catch (InterruptedException e) { }
+				}
+				
+				// Once we are notified, we go back and look for the request in the queue
+				DebugLog(Thread.currentThread().getName()+": notified from request queue, repeating loop");
 			}
 		}
 		
@@ -75,7 +90,7 @@ public class RequestHandler implements Runnable{
 			return;
 		}
 		
-		_status = 4;
+		_currentStatus = Status.CONNECTING_WITH_CLIENT;
 		
 		ServerProtocol.processInput(in, out);
 		
@@ -87,19 +102,25 @@ public class RequestHandler implements Runnable{
 			System.err.println(Thread.currentThread().getName()+": Failed to close socket");
 		}
 		return;
-		
-		
+	}
+	
+	private void DebugLog(String s)
+	{
+		if (false)
+		{
+			System.out.println(s);
+		}
 	}
 	
 	public String getStatus(){
-		switch (_status){
-		case -1: return("Handler is unstarted");
-		case 0: return("Handler is looking for request");
-		case 1: return("Handler found request");
-		case 2: return("Handler is waiting for request");
-		case 3: return("Handler is handling request");
-		case 4: return("Handler is connecting with client");
-		default: return("Handler status is "+_status);
+		switch (_currentStatus){
+		case UNINITIALIZED: return("Handler is unstarted");
+		case LOOKING_FOR_REQUEST: return("Handler is looking for request");
+		case FOUND_REQUEST: return("Handler found request");
+		case WAITING_FOR_REQUEST: return("Handler is waiting for request");
+		case HANDLING_REQUEST: return("Handler is handling request");
+		case CONNECTING_WITH_CLIENT: return("Handler is connecting with client");
+		default: return("Handler is in state: " + _currentStatus.toString());
 		}
 	}
 	
